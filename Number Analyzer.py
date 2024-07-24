@@ -331,7 +331,7 @@ class InputHandler:
                             return [InputHandler.safe_number_input(Constants.NUMBER_INPUT_PROMPT.format(f"number {num + 1} of {number_count}")) for num in range(number_count)]
                         
                         case _:
-                            Constants.print_formatted(Constants.INVALID_INPUT_MESSAGE.format("nutural number"), "error")
+                            Constants.print_formatted(Constants.INVALID_INPUT_MESSAGE.format("natural number"), "error")
 
 
                 case '2' | 'range':

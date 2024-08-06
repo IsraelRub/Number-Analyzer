@@ -1,245 +1,172 @@
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Literal
+Number = Union[int, float]
 
 
 class Constants:
-    MAIN_BULLET = "►"
-    SUB_BULLET = "•"
-    RESULT_BULLET = "✅"
+    PRIMARY_BULLET = "►"
+    SECONDARY_BULLET = "•"
     EXAMPLE_BULLET = "❱"
-    INPUT_BULLET = "✎"
+    INPUT_BULLET = "✎ "
+    BUTTON_BULLET = "⏩"
+
+    POSITIVE_RESULT_INDICATOR = "✅"
+    NEGATIVE_RESULT_INDICATOR = "❎"
 
     TEXT_STYLES = {
         "header": {
-            "border_char": "▂",
-            "bullet_char": "✨",
-            "side_padding": 4
+            "border_char": "=",
+            "bullet_char": "🧮",
+            "side_padding": 6
         },
         "subheader": {
             "border_char": "⚊",
-            "bullet_char":  "❖",
-            "side_padding": 2
+            "bullet_char":  "⚜",
+            "side_padding": 4
         },
         "error": {
-            "border_char": "◢",
+            "border_char": "◢  ",
             "bullet_char": "❌",
-            "text_prefix": "ERROR: "
+            "side_padding": 3
         }
     }
 
     WELCOME_MESSAGE = "Welcome to the Number Cruncher!"
-    SUBTITLE_MESSAGE = f"{TEXT_STYLES['subheader']['bullet_char']} Let's explore some fascinating math tricks with numbers {
-        TEXT_STYLES['subheader']['bullet_char']}"
+    SUBTITLE_MESSAGE = "☛ Let's explore some fascinating math tricks with numbers ☚"
 
-    ACTION_PROMPT = f'''\nWhat math trick do you want to try with your numbers?
-{MAIN_BULLET} 1. type:
-  {SUB_BULLET} Find out if a number is prime, composite, or something special
-    {EXAMPLE_BULLET} Example: Check if 11 is prime
+    EXIT_KEYWORD = '.'
+    EXIT_BUTTON = f"\n  » Remember, at any stage of the program it is possible to exit by entering the character '.': \n\n{
+        BUTTON_BULLET} "
 
-{MAIN_BULLET} 2. prime:
-  {SUB_BULLET} Break down a number into its prime building blocks
-    {EXAMPLE_BULLET} Example: See that 12 = 2, 2, 3
+    ACTION_PROMPT = f'''\nWhat would you like to know about your number(s)?
+{PRIMARY_BULLET} 1. Number Type:
+  {SECONDARY_BULLET} Find out if a number is special (like prime or even)
+    {EXAMPLE_BULLET} Example: Is 12 a prime or a composite (not prime) number?
 
-{MAIN_BULLET} 3. power:
-  {SUB_BULLET} See how a number is built from prime numbers (multiplicative structure)
-    {EXAMPLE_BULLET} Example: See that 12 = 2^2 , 3^1
+{PRIMARY_BULLET} 2. Prime Factors:
+  {SECONDARY_BULLET} Break down a number into its building blocks
+    {EXAMPLE_BULLET} Example: 12 breaks down to 2, 2, and 3
 
-{MAIN_BULLET} 4. divs:
-  {SUB_BULLET} List all the numbers that divide evenly into your number
-    {EXAMPLE_BULLET} Example: Find that divide 12 = 2, 3, 4, 6
+{PRIMARY_BULLET} 3. Prime Power:
+  {SECONDARY_BULLET} See how many times each prime factor appears
+    {EXAMPLE_BULLET} Example: In 12, 2 appears twice and 3 once
 
-{MAIN_BULLET} 5. multi:
-  {SUB_BULLET} Show all the ways to multiply numbers to get your number
-    {EXAMPLE_BULLET} Example: See that 12 = 2 X 6, 3 X 4
+{PRIMARY_BULLET} 4. Divisors:
+  {SECONDARY_BULLET} Find all numbers that divide evenly into your number
+    {EXAMPLE_BULLET} Example: 12 can be divided by 2, 3, 4, and 6
 
-{INPUT_BULLET} Please enter your choice (1-5 or the corresponding word): '''
+{PRIMARY_BULLET} 5. Multiplications:
+  {SECONDARY_BULLET} Show different ways to multiply to get your number
+    {EXAMPLE_BULLET} Example: 12 can be 3 X 4 or 2 X 6
+
+{PRIMARY_BULLET} 6. Exit
+
+  » At any stage of the program it is possible to exit by entering the character '.'
+
+{INPUT_BULLET} Please enter your choice (1-6 or the name):
+
+{BUTTON_BULLET} '''
 
     NUMBER_AMOUNT_PROMPT = f'''\nHow would you like to input your numbers?
-{MAIN_BULLET} 1. Number
-  {SUB_BULLET} Enter a single or multiple numbers
-{MAIN_BULLET} 2. Range
-  {SUB_BULLET} Create an automatic range of numbers
+{PRIMARY_BULLET} 1. Numbers
+  {SECONDARY_BULLET} Enter a single or multiple numbers
+{PRIMARY_BULLET} 2. Range
+  {SECONDARY_BULLET} Generate a range of numbers
+ {EXIT_BUTTON}
 
-{INPUT_BULLET} Please enter your choice (1-3 or the corresponding word): '''
+{INPUT_BULLET} Please enter your choice (1, 2 or the name): '''
 
     DISPLAY_PROMPT = f'''\nHow would you like to view your results?
-{MAIN_BULLET} 1. Each
-  {SUB_BULLET} See details for each number individually
-{MAIN_BULLET} 2. Block
-  {SUB_BULLET} View all results grouped together
+{PRIMARY_BULLET} 1. Each
+  {SECONDARY_BULLET} See details for each number individually
+{PRIMARY_BULLET} 2. Block
+  {SECONDARY_BULLET} View all results grouped together in a block
+ {EXIT_BUTTON}
 
-{INPUT_BULLET} Please enter your choice (Choose a number or name): '''
+{INPUT_BULLET} Please enter your choice (1, 2 or the name): '''
 
     ACTION_AND_DESC = {
-        'type':  None,
-        'prime': "prime factors",
-        'power': "prime factors by power",
-        'divs':  "divisors",
-        'multi': "multiplicative combinations"
+        'type': {
+            "desc": "number type",
+            "func": lambda number, classifier, math_ops: {f"{classifier.classify_number(number)} numbers": [number]}
+        },
+        'prime': {
+            "desc": "prime factors",
+            "func": lambda number, classifier, math_ops: math_ops.factorize_into_primes(number)
+        },
+        'power': {
+            "desc": "prime factors with count",
+            "func": lambda number, classifier, math_ops: math_ops.group_prime_factors_by_power(math_ops.factorize_into_primes(number))
+        },
+        'divs': {
+            "desc": "divisors",
+            "func": lambda number, classifier, math_ops: math_ops.calculate_divisors(math_ops.group_prime_factors_by_power(math_ops.factorize_into_primes(number)))
+        },
+        'multi': {
+            "desc": "multiplication combinations",
+            "func": lambda number, classifier, math_ops: math_ops.generate_factor_pairs(math_ops.calculate_divisors(math_ops.group_prime_factors_by_power(math_ops.factorize_into_primes(number))))
+        }
     }
 
     DISPLAY_TYPES = {'each', 'block', None}
 
     ENTER_RANGE_PROMPT = f"{
-        INPUT_BULLET} Enter the {{}} of the range (you can use math expressions): "
-    NUMBER_INPUT_PROMPT = f"{
+        INPUT_BULLET} Enter the {{}} value of the range (you can use math expressions): "
+    NUMBERS_INPUT_PROMPT = f"{
         INPUT_BULLET} Enter {{}} (feel free to use math expressions, e.g., 12 X 9, 6^8): "
-    INVALID_INPUT_MESSAGE = "Oops! That's not a valid {}. Let's give it another"
+    INVALID_INPUT_MESSAGE = "Oops! That's not a valid {}. Let's give it another try."
 
-    RANGE_ZERO_STEP_ERROR = "The step cannot be zero. Please choose a non-zero value"
-    RANGE_EMPTY_ERROR = "The range is empty. Please ensure the start, end, and step create a valid range"
+    RANGE_ZERO_STEP_ERROR = "The step cannot be zero. Please choose a non-zero value."
+    RANGE_EMPTY_ERROR = "The range is empty. Please ensure that the start, end, and step values create a valid range."
 
-    @staticmethod
-    def print_formatted(text: str, style_name: str = "header") -> None:
-
-        style_config = Constants.TEXT_STYLES[style_name]
-        formatted_text = f"{style_config.get('text_prefix', '')}{text}"
-        total_line_length = len(formatted_text) + style_config.get("side_padding", 0) * 2
-
-        if style_name == "error":
-            border_line = f"{style_config['border_char']}  " * ((total_line_length // 3) + 2)
-        else:
-            border_line = style_config['border_char'] * total_line_length
-
-        print(f"\n{border_line}")
-        print(f"{style_config['bullet_char']} {
-              formatted_text} {style_config['bullet_char']}")
-        print(border_line)
-
-    @staticmethod
-    def handle_error(error_message: str) -> None:
-        Constants.print_formatted(error_message, "error")
+    NUMBERS_COUNT_PROMPT = f"{
+        INPUT_BULLET} How many numbers do you want to enter? "
 
 
-class NumberAnalysis:
+class NumberClassifier:
     def __init__(self):
         self.smallest_factor = None
 
-    def number_analysis_hub(self, numbers: Any, action: str, display: Optional[str] = None) -> str:
-        if action not in Constants.ACTION_AND_DESC:
-            Constants.print_formatted("Enter a valid action", "error")
-            return "Invalid action"
-
-        if display not in Constants.DISPLAY_TYPES:
-            Constants.print_formatted("Enter a valid display", "error")
-            return "Invalid display"
-
-        number_type = self.classify_number(numbers)
-
-        match number_type:
-            case 'is a list':
-                self.print_to_list(numbers, action, display)
-                return number_type
-
-        self.print_to_single(numbers, action)
-        return number_type
-
     def classify_number(self, number: Any) -> str:
-        if isinstance(number, (int, float)):
-            if not (number).is_integer() or number <= 1:
-                return 'not applicable for primality'
-            if number % 2 == 0 and number != 2:
-                return 'is composite'
-            for factor in range(3, int(number ** 0.5) + 1, 2):
-                if (number % factor) == 0:
-                    self.smallest_factor = factor
+
+        match number:
+            case int() | float():
+
+                if number <= 1 or not number.is_integer():
+                    return 'not applicable for primality'
+
+                if self._is_even_composite(number):
                     return 'is composite'
-            return 'is prime'
-        if isinstance(number, list):
-            return 'is a list'
 
-        return 'is invalid'
+                if self._is_odd_composite(number):
+                    return 'is composite'
 
-    def create_action_results_dict(self, numbers: Union[int, List[int]], action: str) -> Dict[str, Any]:
-        numbers_dict = {}
-        not_relevants_dict = {}
+                return 'is prime'
 
-        for number in numbers:
-            number_type = self.classify_number(number)
+            case list():
+                return 'is a list'
 
-            if number_type == 'is composite':
-                result = self.execute_number_action(number, action)
-                numbers_dict[number] = result
+            case _:
+                return 'is invalid'
 
-            else:
-                not_relevants_dict.setdefault('Irrelevant', []).append(number)
+    _is_even_composite: Callable[[
+        int], bool] = lambda self, number: number % 2 == 0 and number != 2
 
-        return not_relevants_dict | numbers_dict
+    def _is_odd_composite(self, number: int) -> bool:
+        for factor in range(3, int(number ** 0.5) + 1, 2):
+            if number % factor == 0:
+                self.smallest_factor = factor
+                return True
+        return False
 
-    def create_type_dict(self, list_of_numbers: List[int]) -> Dict[str, List[int]]:
-        type_dict = {}
-        for number in list_of_numbers:
-            number_type = self.classify_number(number)
-            type_dict.setdefault(f"{number_type} numbers", []).append(number)
-        return type_dict
 
-    def execute_number_action(self, number: int, action: str) -> Union[List[int], str]:
-        match action:
-            case 'prime':
-                return self.create_primes_factors_list(number)
-
-            case 'power':
-                return self.create_prime_by_power_structure(self.create_primes_factors_list(number))
-
-            case 'divs':
-                return self.create_divisors_list(self.create_prime_by_power_structure(self.create_primes_factors_list(number)))
-
-            case 'multi':
-                return self.calculate_multiplicative_combinations(self.create_divisors_list(self.create_prime_by_power_structure(self.create_primes_factors_list(number))))
-        return f"{Constants.RESULT_BULLET} Invalid action: {action} {Constants.RESULT_BULLET}"
-
-    def print_to_single(self, number: int, action: str) -> str:
-        number_type = self.classify_number(number)
-
-        if action == 'type' or number_type != 'is composite':
-            print(f"\n{Constants.RESULT_BULLET} The number {
-                  number} {number_type}")
-            return number_type
-
-        description = Constants.ACTION_AND_DESC[action]
-        action_results = self.execute_number_action(number, action)
-        print(f"\n{Constants.RESULT_BULLET} For the number {number}:")
-        print(f"  {Constants.SUB_BULLET} Number of {
-              description}: {len(action_results)}")
-        print(f"  {Constants.SUB_BULLET} List of {description}: {
-              self.object_to_str(action_results)}")
-
-        return number_type
-
-    def print_to_list(self, list_of_numbers: List[int], action: str, display: str) -> None:
-
-        if len(list_of_numbers) > 1:
-            Constants.print_formatted("Results", "header")
-            print(f"Numbers: {self.object_to_str(list_of_numbers)}\n")
-
-            match display:
-                case 'each':
-                    for number in list_of_numbers:
-                        self.print_to_single(number, action)
-
-                case 'block':
-
-                    results = self.create_action_results_dict(
-                        list_of_numbers, action) if action != 'type' else self.create_type_dict(list_of_numbers)
-                    for key, value in results.items():
-                        print(f"\t{Constants.RESULT_BULLET} {
-                              key}: {self.object_to_str(value)}")
-
-                case _:
-                    Constants.print_formatted("Enter a valid display", "error")
-
-        elif len(list_of_numbers) == 1:
-            self.print_to_single(list_of_numbers[0], action)
-
-        else:
-            Constants.print_formatted("It does not contain numbers", "error")
-        return
-
-    def create_primes_factors_list(self, number: int) -> List[int]:
+class MathOperations:
+    @staticmethod
+    def factorize_into_primes(number: int) -> List[int]:
         factors_list = []
         while number % 2 == 0:
             factors_list.append(2)
             number //= 2
-        start = self.smallest_factor if self.smallest_factor else 3
+        start = 3
         for factor in range(start, int(number ** 0.5) + 1, 2):
             while number % factor == 0:
                 factors_list.append(factor)
@@ -248,50 +175,235 @@ class NumberAnalysis:
             factors_list.append(number)
         return factors_list
 
-    create_prime_by_power_structure: Callable[[List[int]], List[str]] = staticmethod(
+    group_prime_factors_by_power: Callable[[List[int]], List[str]] = staticmethod(
         lambda factors_list: [f"{factor}^{factors_list.count(factor)}" for factor in set(factors_list)])
 
     @staticmethod
-    def create_divisors_list(multiplicative_structure: List[str]) -> List[int]:
+    def calculate_divisors(prime_factor_powers: List[str]) -> List[int]:
         divisors = {1}
-        for factor in multiplicative_structure:
+
+        for factor in prime_factor_powers:
             prime, power = map(int, factor.split('^'))
             temp_divisors = set()
+
             for i in range(power + 1):
                 temp_divisors.update(
                     {divisor * prime ** i for divisor in divisors})
             divisors = temp_divisors
+
         return sorted(divisors)[1:-1]
 
-    calculate_multiplicative_combinations: Callable[[List[int]], List[str]] = staticmethod(
-        lambda divisors: [f"{divisors[i]} X {divisors[-1-i]}" for i in range(1, len(divisors) // 2 + (len(divisors) % 2))])
+    generate_factor_pairs: Callable[[List[int]], List[str]] = staticmethod(
+        lambda divisors: [f"{divisors[i]} X {divisors[-1-i]}" for i in range(len(divisors) // 2 + (len(divisors) % 2))])
 
-    object_to_str: Callable[[Union[list, dict]], str] = staticmethod(
+
+class NumberAnalysis:
+    def __init__(self):
+        self.classifier = NumberClassifier()
+        self.math_ops = MathOperations()
+
+    def number_analysis_hub(self, numbers: Any, action: str, display: Optional[str] = None) -> str:
+        if not self._validate_input(action, display):
+            return "Invalid input"
+
+        number_type = self.classifier.classify_number(numbers)
+
+        if number_type == 'is a list':
+            self.process_list(numbers, action, display)
+        else:
+            Printer.display_individual_result(numbers, action, self)
+
+        return number_type
+
+    def _validate_input(self, action: str, display: Optional[str]) -> bool:
+        if action not in Constants.ACTION_AND_DESC:
+            Printer.print_formatted("error", "action")
+            return False
+
+        if display not in Constants.DISPLAY_TYPES:
+            Printer.print_formatted("error", "display")
+            return False
+
+        return True
+
+    def create_action_results_dict(self, numbers: Union[int, List[int]], action: str) -> Dict[str, Any]:
+        numbers_dict = {}
+        not_relevants_dict = {}
+
+        selected_action_function = Constants.ACTION_AND_DESC[action]["func"]
+
+        for number in numbers:
+            number_type = self.classifier.classify_number(number)
+
+            if number_type == 'is composite':
+                result = selected_action_function(
+                    number, self.classifier, self.math_ops)
+                numbers_dict[number] = result
+            else:
+                not_relevants_dict.setdefault('Irrelevant', []).append(number)
+
+        return not_relevants_dict | numbers_dict
+
+    def create_type_dict(self, list_of_numbers: List[int]) -> Dict[str, List[int]]:
+        type_dict = {}
+        for number in list_of_numbers:
+            number_type = self.classifier.classify_number(number)
+            type_dict.setdefault(f"{number_type} numbers", []).append(number)
+        return type_dict
+
+    def process_list(self, list_of_numbers: List[int], action: str, display: str) -> None:
+        if len(list_of_numbers) > 1:
+            Printer.print_formatted("header", "Results")
+            print(f"Numbers: {
+                  Printer.format_object_to_str(list_of_numbers)}\n")
+
+            match display:
+                case 'each':
+                    for number in list_of_numbers:
+                        Printer.display_individual_result(number, action, self)
+
+                case 'block':
+                    if action == 'type':
+                        results = self.create_type_dict(list_of_numbers)
+                        Printer.display_grouped_results(
+                            results, style_type=True)
+
+                    else:
+                        results = self.create_action_results_dict(
+                            list_of_numbers, action)
+                        Printer.display_grouped_results(results)
+
+                case _:
+                    Printer.print_formatted("error", "display")
+
+        elif len(list_of_numbers) == 1:
+            Printer.display_individual_result(number, action, self)
+        else:
+            Printer.print_formatted("error", "It does not contain numbers")
+
+
+class Printer:
+    positive_indicator = Constants.POSITIVE_RESULT_INDICATOR
+    negative_indicator = Constants.NEGATIVE_RESULT_INDICATOR
+
+    @staticmethod
+    def print_formatted(style_name: str, text: str) -> None:
+        style_config = Constants.TEXT_STYLES[style_name]
+
+        if style_name == "error":
+            text = f"ERROR: {Constants.INVALID_INPUT_MESSAGE.format(text)}"
+            border_line = style_config['border_char'] * \
+                ((len(text)) // 3 + style_config["side_padding"])
+        else:
+            border_line = style_config['border_char'] * \
+                (len(text) + style_config["side_padding"])
+
+        print(f"\n{border_line}")
+        print(style_config['bullet_char'], text, style_config['bullet_char'])
+        print(f"{border_line}\n")
+
+    @classmethod
+    def get_result_indicator(cls, number: Union[int, str], number_type: str, style_type) -> str:
+        if (style_type and "invalid" not in number_type) \
+                or number_type == 'is composite' \
+                or isinstance(number, int):
+            return cls.positive_indicator
+        else:
+            return cls.negative_indicator
+
+    @classmethod
+    def display_individual_result(cls, number: int, action: str, analysis: NumberAnalysis) -> None:
+        number_type = analysis.classifier.classify_number(number)
+        action_results = None
+
+        if action == 'type' or number_type == 'is composite':
+            selected_action_function = Constants.ACTION_AND_DESC[action]["func"]
+            action_results = selected_action_function(
+                number, analysis.classifier, analysis.math_ops)
+
+        indicator = cls.get_result_indicator(
+            number, number_type, action == 'type')
+
+        if action == 'type':
+            print(f"\n{indicator} The number {number} {number_type}")
+        elif number_type != 'is composite':
+            print(f"\n{indicator} The number {number} {number_type}")
+        else:
+            description = Constants.ACTION_AND_DESC[action]["desc"]
+            print(f"\n{indicator} For the number {number}:")
+            print(f"   {Constants.SECONDARY_BULLET} Number of {
+                  description}: {len(action_results)}")
+            print(f"   {Constants.SECONDARY_BULLET} List of {
+                  description}: {cls.format_object_to_str(action_results)}")
+
+    @classmethod
+    def display_grouped_results(cls, results: Dict[str, Any], style_type=False) -> None:
+        for key, value in results.items():
+            bullet = cls.get_result_indicator(key, key, style_type)
+            print(f"   {bullet} {key}: {Printer.format_object_to_str(value)}")
+
+    format_object_to_str: Callable[[Union[list, dict]], str] = staticmethod(
         lambda obj: str(obj)[1:-1].replace("'", ""))
 
 
 class InputHandler:
+
     @staticmethod
-    def get_user_input() -> Tuple[Union[int, float, List[Union[int, float]]], str, Optional[str]]:
+    def exit_program() -> None:
+        print("Exiting the program...")
+        # raise SystemExit
+        exit()
+
+    @staticmethod
+    def user_input_hub() -> Tuple[Union[int, float, List[Union[int, float]]], str, Optional[str]]:
         action = InputHandler.get_action()
         numbers = InputHandler.get_numbers()
-        display = InputHandler.get_display() if isinstance(numbers, list) else None
+        display = InputHandler.get_display() if isinstance(
+            numbers, list) and len(numbers) > 1 else None
+
         return numbers, action, display
 
     @staticmethod
-    def safe_number_input(prompt: str) -> Union[int, float]:
+    def safe_number_input(prompt: str, input_type: str = "number") -> Union[int, float]:
         while True:
-            user_input = input(prompt).upper().replace(
+            user_input = input(prompt).strip().upper().replace(
                 'X', '*').replace('^', '**')
-            try:
-                return eval(user_input) if isinstance(user_input, float) and not user_input.is_integer() else int(eval(user_input))
-            except:
-                Constants.print_formatted(
-                    Constants.INVALID_INPUT_MESSAGE.format("number"), "error")
+            match user_input:
+                case Constants.EXIT_KEYWORD:
+                    InputHandler.exit_program()
+                case _:
+                    try:
+                        if "range" in input_type:
+                            if input_type == 'range_start':
+                                return int(user_input) if user_input else 0
+                            if input_type == 'range_step':
+                                if user_input == '0':
+                                    raise ValueError(
+                                        Constants.RANGE_ZERO_STEP_ERROR)
+                                return int(user_input) if user_input else 1
+                            if input_type == 'range_end':
+                                return int(user_input)
+
+                        computed_number = eval(user_input, {}, {})
+                        if not isinstance(computed_number, (int, float)):
+                            raise ValueError("Input must evaluate to a number")
+
+                        if input_type == "count":
+                            if not isinstance(computed_number, int) or computed_number < 1:
+                                raise ValueError(
+                                    Constants.INVALID_INPUT_MESSAGE.format("natural number"))
+
+                        return int(computed_number) if computed_number.is_integer() else computed_number
+
+                    except (SyntaxError, NameError, TypeError):
+                        Printer.print_formatted(
+                            "error", "mathematical expression")
+                    except:
+                        Printer.print_formatted("error", "natural number")
 
     @staticmethod
     def get_action() -> str:
-        Constants.print_formatted("Action Selection", "subheader")
+        Printer.print_formatted("subheader", "Action Selection")
         while True:
             action = input(Constants.ACTION_PROMPT).strip().lower()
             match action:
@@ -310,41 +422,66 @@ class InputHandler:
                 case '5' | 'multi':
                     return 'multi'
 
+                case '6' | Constants.EXIT_KEYWORD:
+                    InputHandler.exit_program()
+
                 case _:
-                    Constants.print_formatted(Constants.INVALID_INPUT_MESSAGE.format("action"), "error")
+                    Printer.print_formatted("error", "action")
 
     @staticmethod
-    def get_numbers() -> Union[int, float, List[int]]:
-        Constants.print_formatted("Number Selection", "subheader")
+    def get_numbers() -> Union[int, float, List[Union[int, float]], str]:
+        Printer.print_formatted("subheader", "Number Selection")
+
         while True:
-            Selection = input(Constants.NUMBER_AMOUNT_PROMPT).strip().lower()
-            match Selection:
-
-                case '1' | 'number':
-                    number_count = InputHandler.safe_number_input(f"{Constants.INPUT_BULLET} How many numbers do you want to enter? ")                    
-
-                    match number_count:
-                        case 1:
-                            return InputHandler.safe_number_input(Constants.NUMBER_INPUT_PROMPT.format("your number"))
-
-                        case _ if number_count > 0 and isinstance(number_count, int):
-                            return [InputHandler.safe_number_input(Constants.NUMBER_INPUT_PROMPT.format(f"number {num + 1} of {number_count}")) for num in range(number_count)]
-                        
-                        case _:
-                            Constants.print_formatted(Constants.INVALID_INPUT_MESSAGE.format("natural number"), "error")
-
-
+            selection = input(Constants.NUMBER_AMOUNT_PROMPT.format(
+                "action")).strip().lower()
+            match selection:
+                case '1' | 'numbers':
+                    return InputHandler.get_single_or_multiple_numbers()
                 case '2' | 'range':
                     return InputHandler.get_range()
 
+                case Constants.EXIT_KEYWORD:
+                    InputHandler.exit_program()
                 case _:
-                    Constants.print_formatted(Constants.INVALID_INPUT_MESSAGE.format("number"), "error")
+                    Printer.print_formatted("error", "numbers")
+
+    @staticmethod
+    def get_single_or_multiple_numbers() -> Union[int, float, List[Union[int, float]], str]:
+        while True:
+            number_count = InputHandler.safe_number_input(
+                Constants.NUMBERS_COUNT_PROMPT, "count")
+
+            if number_count == 1:
+                return InputHandler.safe_number_input(Constants.NUMBERS_INPUT_PROMPT.format("the number"))
+            else:
+                return [InputHandler.safe_number_input(Constants.NUMBERS_INPUT_PROMPT.format(f"number {num + 1} of {number_count}")) for num in range(number_count)]
+
+    @staticmethod
+    def get_range() -> Union[int, List[int], str]:
+        Printer.print_formatted("subheader", "Range Input")
+        while True:
+            start_range = InputHandler.safe_number_input(
+                Constants.ENTER_RANGE_PROMPT.format("start"), "range_start")
+            step_range = InputHandler.safe_number_input(
+                Constants.ENTER_RANGE_PROMPT.format("step"), "range_step")
+            stop_range = InputHandler.safe_number_input(
+                Constants.ENTER_RANGE_PROMPT.format("end"), "range_end")
+
+            range_values = list(range(start_range, stop_range, step_range))
+
+            if not range_values:
+                Printer.print_formatted("error", Constants.RANGE_EMPTY_ERROR)
+                continue
+
+            return range_values[0] if len(range_values) == 1 else range_values
 
     @staticmethod
     def get_display() -> str:
-        Constants.print_formatted("Display Selection", "subheader")
+        Printer.print_formatted("subheader", "Display Selection")
         while True:
-            display = input(Constants.DISPLAY_PROMPT).strip().lower()
+            display = input(Constants.DISPLAY_PROMPT.format(
+                "numbers")).strip().lower()
             match display:
                 case '1' | 'each':
                     return 'each'
@@ -352,61 +489,39 @@ class InputHandler:
                 case '2' | 'block':
                     return 'block'
 
+                case Constants.EXIT_KEYWORD:
+                    InputHandler.exit_program()
+
                 case _:
-                    Constants.print_formatted(
-                        Constants.INVALID_INPUT_MESSAGE.format("display"), "error")
-
-    @staticmethod
-    def get_range() -> Union[int, List[int]]:
-        Constants.print_formatted("Range Input", "subheader")
-        while True:
-            try:
-                start_range = InputHandler.safe_number_input(
-                    Constants.ENTER_RANGE_PROMPT.format("start"))
-                step_range = InputHandler.safe_number_input(
-                    Constants.ENTER_RANGE_PROMPT.format("step"))
-                if step_range == 0:
-                    raise ValueError(Constants.RANGE_ZERO_STEP_ERROR)
-                stop_range = InputHandler.safe_number_input(
-                    Constants.ENTER_RANGE_PROMPT.format("end"))
-
-                range_values = list(range(start_range, stop_range, step_range))
-
-                if not range_values:
-                    raise ValueError(Constants.RANGE_EMPTY_ERROR)
-
-                if len(range_values) == 1:
-                    return range_values[0]
-
-                return range_values
-
-            except ValueError as err:
-                Constants.print_formatted(
-                    f"Invalid input: {err}. Please try again.", "error")
+                    Printer.print_formatted("error", "display")
 
 
 def main() -> None:
-    Constants.print_formatted(Constants.WELCOME_MESSAGE, "header")
+    Printer.print_formatted("header", Constants.WELCOME_MESSAGE)
     print(Constants.SUBTITLE_MESSAGE)
 
-    # numbers = 144
-    # numbers = list(range(-2,13))
-    numbers = [2 ** i - 1 for i in range(10, 21)]
-    # numbers = [-99, 89, 363-54, 8374/4, 101, 200, 'hfhfh', '5/0', 974589//18]
+    numbers = 10141
+    # numbers = list(range(-2, 13))
+    # numbers = [2 ** i - 1 for i in range(-2, 21)]
+    numbers = [-99, 89, 363-54, 8374/4, 101, 200, 'hfhfh', '5/0', 974589//18]
 
-    # action = 'type'
+    action = 'type'
     # action = 'prime'
-    action = 'power'
+    # action = 'power'
     # action = 'divs'
-    # action = 'multi'
+    action = 'multi'
 
     display = 'each'
     # display = 'block'
 
-    input_handler = InputHandler()
-    numbers, action, display = input_handler.get_user_input()
     number_analysis = NumberAnalysis()
     number_analysis.number_analysis_hub(numbers, action, display)
+
+    # input_handler = InputHandler()
+    # number_analysis = NumberAnalysis()
+    # while True:
+    #     numbers, action, display = input_handler.user_input_hub()
+    #     number_analysis.number_analysis_hub(numbers, action, display)
 
 
 if __name__ == '__main__':

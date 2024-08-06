@@ -514,14 +514,14 @@ def main() -> None:
     display = 'each'
     # display = 'block'
 
-    number_analysis = NumberAnalysis()
-    number_analysis.number_analysis_hub(numbers, action, display)
-
-    # input_handler = InputHandler()
     # number_analysis = NumberAnalysis()
-    # while True:
-    #     numbers, action, display = input_handler.user_input_hub()
-    #     number_analysis.number_analysis_hub(numbers, action, display)
+    # number_analysis.number_analysis_hub(numbers, action, display)
+
+    input_handler = InputHandler()
+    number_analysis = NumberAnalysis()
+    while True:
+        numbers, action, display = input_handler.user_input_hub()
+        number_analysis.number_analysis_hub(numbers, action, display)
 
 
 if __name__ == '__main__':
